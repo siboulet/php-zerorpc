@@ -1,0 +1,19 @@
+{
+  "name": "siboulet/php-zerorpc",
+  "description": "A simple ZeroRPC client.",
+  "authors": [
+    {
+      "name": "Simon Boulet",
+      "email": "simon@nostalgeek.com",
+      "role": "Developer"
+    }
+  ],
+  "license": "MIT",
+  "require": {
+    "ext-zmq": "*"
+  },
+  "autoload": {
+    "classmap": ["ZeroRPC/"]
+  },
+  "minimum-stability": "dev"
+}
