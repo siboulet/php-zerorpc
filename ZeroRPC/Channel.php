@@ -18,6 +18,10 @@ class Channel {
         continue;
       }
 
+      if (count($event) !== 3) {
+        throw new \ZeroRPCProtocolException("Expected array of size 3");
+      }
+
       if ($event[0]['response_to'] !== $this->id) {
         // Received an event for another channel
         continue;
