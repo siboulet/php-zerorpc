@@ -4,8 +4,6 @@ namespace ZeroRPC;
 
 use ZMQ;
 
-class ZeroRPCSocketException extends \ZeroRPCException {}
-
 class Socket {
   private $zmq;
 
@@ -20,7 +18,7 @@ class Socket {
 
     if (($recv = $this->zmq->recvMulti())) {
       if (strlen($recv[count($recv)-2]) !== 0) {
-        throw new ZeroRPCSocketException('Expected second to last argument to be an empty buffer, but it is not');
+        throw new \ZeroRPCProtocolException('Expected second to last argument to be an empty buffer, but it is not');
       }
 
       return msgpack_unpack($recv[1]);

@@ -4,6 +4,7 @@ use \ZeroRPC\Channel;
 use \ZeroRPC\Socket;
 
 class ZeroRPCException extends RuntimeException {}
+class ZeroRPCProtocolException extends ZeroRPCException {}
 class ZeroRPCRemoteException extends ZeroRPCException {}
 class ZeroRPCTimeoutException extends ZeroRPCException {}
 
