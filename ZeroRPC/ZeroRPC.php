@@ -24,7 +24,13 @@ class ZeroRPC {
     $channel->send($name, $args);
     $response = $channel->recv($timeout);
 
-    // Convert to object
-    return json_decode(json_encode($response), false);
+    // Try to be clever on what type of response we received. Both
+    // array and object will be encoded as array. If the response is
+    // an array, check if it's associative, and cast it to an object.
+    if (is_array($response) && is_string(key($response))) {
+      return (object) $response;
+    }
+
+    return $response;
   }
 }
