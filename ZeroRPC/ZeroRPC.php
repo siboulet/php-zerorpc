@@ -5,8 +5,16 @@ use \ZeroRPC\Socket;
 
 class ZeroRPCException extends RuntimeException {}
 class ZeroRPCProtocolException extends ZeroRPCException {}
-class ZeroRPCRemoteException extends ZeroRPCException {}
 class ZeroRPCTimeoutException extends ZeroRPCException {}
+
+class ZeroRPCRemoteException extends ZeroRPCException {
+  public function __construct(array $error) {
+    $this->name = $error[0];
+    parent::__construct($error[1], intval($error[0]));
+  }
+
+  public function getName() { return $this->name; }
+}
 
 class ZeroRPC {
   private $socket;

@@ -33,7 +33,7 @@ class Channel {
           break;
 
         case 'ERR':
-          throw new \ZeroRPCRemoteException($event[2][1]);
+          throw new \ZeroRPCRemoteException($event[2]);
           break;
 
         case '_zpc_hb':
