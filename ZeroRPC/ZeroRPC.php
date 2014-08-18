@@ -10,7 +10,7 @@ class ZeroRPCTimeoutException extends ZeroRPCException {}
 class ZeroRPCRemoteException extends ZeroRPCException {
   public function __construct(array $error) {
     $this->name = $error[0];
-    parent::__construct($error[1], intval($error[0]));
+    parent::__construct(is_string($error[1]) ? $error[1] : null , intval($error[0]));
   }
 
   public function getName() { return $this->name; }
