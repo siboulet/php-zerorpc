@@ -2,60 +2,58 @@
 
 namespace ZeroRPC;
 
+class ChannelException extends \RuntimeException {}
+
 class Channel {
-  private $socket;
-  private $id = null;
+  const PROTOCOL_VERSION = 3;
 
-  public function __construct($socket) {
+  private static $channels = array();
+
+  protected $id;
+  protected $envelope;
+  protected $socket;
+  private $callbacks = array();
+
+  public function __construct($id, $envelope, $socket) {
+    $this->id = $id;
+    $this->envelope = $envelope;
     $this->socket = $socket;
+
+    self::$channels[$id] = $this;
   }
 
-  public function recv($timeout = 10) {
-    $start = time();
-
-    while (($ttl = $timeout - (time() - $start)) > 0) {
-      if (! ($event = $this->socket->recv($ttl))) {
-        continue;
-      }
-
-      if (count($event) !== 3) {
-        throw new \ZeroRPCProtocolException("Expected array of size 3");
-      }
-
-      if ($event[0]['response_to'] !== $this->id) {
-        // Received an event for another channel
-        continue;
-      }
-
-      switch ($event[1]) {
-        case 'OK':
-          return $event[2][0];
-          break;
-
-        case 'ERR':
-          throw new \ZeroRPCRemoteException($event[2]);
-          break;
-
-        case '_zpc_hb':
-          // Send heartbeat response
-          $this->send('_zpc_hb');
-          break;
-      }
-    }
-
-    throw new \ZeroRPCTimeoutException('Timeout after '. (time() - $start).' seconds');
+  public static function get($id) {
+    if (isset(self::$channels[$id])) return self::$channels[$id];
+  }
+  
+  public static function count() {
+    return count(self::$channels);
   }
 
-  public function send($name, $args = array(null)) {
-    if (!$this->id) {
-      $this->id = uniqid();
-      // First message contain channel id as message_id
-      $header = array('v' => 3, 'message_id' => $this->id);
-    } else {
-      // Subsequent use reponse_to for channel id and generate new message_id
-      $header = array('v' => 3, 'message_id' => uniqid(), 'response_to' => $this->id);
+  public function register($callback) {
+    array_push($this->callbacks, $callback);
+  }
+
+  // Called when the channel receives an event
+  public function invoke(Event $event) {
+    if ($event->name === '_zpc_hb') {
+      // Send heartbeat response
+      return $this->send('_zpc_hb');
     }
-    $event = array($header, $name, $args);
+
+    foreach($this->callbacks as $callback) {
+      $callback($event);
+    }
+
+    unset(self::$channels[$this->id]);
+  }
+
+  public function send($name, array $args = null) {
+    $event = new Event($this->envelope, $this->createHeader(), $name, $args);
     $this->socket->send($event);
+  }
+
+  public function createHeader() {
+    return array('v'=>PROTOCOL_VERSION, 'message_id'=>uniqid(), 'response_to'=>$this->id);
   }
 }
