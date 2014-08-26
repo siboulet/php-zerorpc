@@ -8,12 +8,14 @@ class SocketException extends \RuntimeException {}
 
 class Socket {
   private $zmq;
+  private $timeout;
 
-  public function __construct($endpoint, $timeout = 10) {
+  public function __construct($endpoint, $timeout) {
     $this->zmq = new \ZMQSocket(new \ZMQContext(), ZMQ::SOCKET_XREQ);
-    $this->zmq->setSockOpt(ZMQ::SOCKOPT_RCVTIMEO, $timeout * 1000);
+    $this->zmq->setSockOpt(ZMQ::SOCKOPT_RCVTIMEO, $timeout);
     $this->zmq->setSockOpt(ZMQ::SOCKOPT_LINGER, 0);
     $this->zmq->connect($endpoint);
+    $this->timeout = $timeout;
   }
 
   public function send(Event $event) {
@@ -22,7 +24,7 @@ class Socket {
 
   public function dispatch() {
     do {
-      if (!($recv = $this->zmq->recvMulti())) throw new SocketException('Receive timed out');
+      if (!($recv = $this->zmq->recvMulti())) throw new SocketException('Lost remote after '.$this->timeout.'ms');
 
       if (strlen($recv[count($recv)-2]) !== 0) {
         throw new SocketException('Expected second to last argument to be an empty buffer, but it is not');

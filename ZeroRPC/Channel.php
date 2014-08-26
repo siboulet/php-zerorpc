@@ -9,15 +9,19 @@ class Channel {
 
   private static $channels = array();
 
+  private $expire;
+  private $callbacks = array();
+
   protected $id;
   protected $envelope;
   protected $socket;
-  private $callbacks = array();
+  protected $timeout;
 
-  public function __construct($id, $envelope, $socket) {
+  public function __construct($id, $envelope, $socket, $timeout) {
     $this->id = $id;
     $this->envelope = $envelope;
     $this->socket = $socket;
+    $this->timeout = $timeout;
 
     self::$channels[$id] = $this;
   }
@@ -36,9 +40,11 @@ class Channel {
 
   // Called when the channel receives an event
   public function invoke(Event $event) {
+    if (microtime(true) > $this->expire) throw new ChannelException('Timed out');
+
     if ($event->name === '_zpc_hb') {
       // Send heartbeat response
-      return $this->send('_zpc_hb');
+      return $this->socket->send(new Event($this->envelope, $this->createHeader(), '_zpc_hb'));
     }
 
     foreach($this->callbacks as $callback) {
@@ -49,6 +55,7 @@ class Channel {
   }
 
   public function send($name, array $args = null) {
+    $this->expire = microtime(true) + ($this->timeout / 1000);
     $event = new Event($this->envelope, $this->createHeader(), $name, $args);
     $this->socket->send($event);
   }

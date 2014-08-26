@@ -12,10 +12,14 @@ class ClientException extends \RuntimeException {
 }
 
 class Client {
-  private $socket;
+  const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
-  public function __construct($endpoint, $timeout = 10) {
+  private $socket;
+  private $timeout;
+
+  public function __construct($endpoint, $timeout = self::DEFAULT_TIMEOUT) {
     $this->socket = new Socket($endpoint, $timeout);
+    $this->timeout = $timeout;
   }
 
   public function __call($name, $args) {
@@ -42,7 +46,7 @@ class Client {
   }
 
   public function invoke($name, array $args = null, $callback = null) {
-    $channel = new ClientChannel($this->socket);
+    $channel = new ClientChannel($this->socket, $this->timeout);
     if ($callback) $channel->register($callback);
     $channel->send($name, $args);
   }
