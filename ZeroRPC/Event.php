@@ -10,7 +10,7 @@ class Event {
   public $name;
   public $args;
 
-  public function __construct($envelope, array $header, $name, array $args) {
+  public function __construct($envelope, array $header, $name, array $args = null) {
     $this->envelope = $envelope;
     $this->header = $header;
     $this->name = $name;
