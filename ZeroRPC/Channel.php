@@ -54,6 +54,6 @@ class Channel {
   }
 
   public function createHeader() {
-    return array('v'=>PROTOCOL_VERSION, 'message_id'=>uniqid(), 'response_to'=>$this->id);
+    return array('v'=>self::PROTOCOL_VERSION, 'message_id'=>uniqid(), 'response_to'=>$this->id);
   }
 }
