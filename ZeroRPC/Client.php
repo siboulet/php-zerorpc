@@ -2,14 +2,7 @@
 
 namespace ZeroRPC;
 
-class ClientException extends \RuntimeException {
-  public function __construct(Event $event) {
-    $this->name = $event->args[0];
-    parent::__construct(is_string($event->args[1]) ? $event->args[1] : null , intval($event->args[0]));
-  }
-
-  public function getName() { return $this->name; }
-}
+class ClientException extends \RuntimeException {};
 
 class Client {
   const DEFAULT_TIMEOUT = 10000; // 10 seconds
@@ -26,8 +19,12 @@ class Client {
     $response = null;
 
     $this->invoke($name, $args, function($event) use (&$response) {
+      if ($event->name === 'ERR') {
+        throw new ClientException(is_string($event->args[1]) ? $event->args[1] : null , intval($event->args[0]));
+      }
+      
       if ($event->name !== 'OK') {
-        throw new ClientException($event);
+        throw new ClientException('Unexpected event');
       }
 
       $response = $event->args[0];
