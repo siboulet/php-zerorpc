@@ -6,6 +6,7 @@ class ChannelException extends \RuntimeException {}
 
 class Channel {
   const PROTOCOL_VERSION = 3;
+  const DEFAULT_CAPACITY = 100;
 
   private static $channels = array();
 
@@ -16,12 +17,14 @@ class Channel {
   protected $envelope;
   protected $socket;
   protected $timeout;
+  protected $capacity;
 
-  public function __construct($id, $envelope, $socket, $timeout) {
+  public function __construct($id, $envelope, $socket, $timeout, $capacity = self::DEFAULT_CAPACITY) {
     $this->id = $id;
     $this->envelope = $envelope;
     $this->socket = $socket;
     $this->timeout = $timeout;
+    $this->capacity = $capacity;
 
     self::$channels[$id] = $this;
   }
@@ -50,8 +53,12 @@ class Channel {
     foreach($this->callbacks as $callback) {
       $callback($event);
     }
-
-    unset(self::$channels[$this->id]);
+    
+    if ($event->name === 'STREAM') {
+      $this->send('_zpc_more', array($this->capacity));
+    } else {
+      unset(self::$channels[$this->id]);
+    }
   }
 
   public function send($name, array $args = null) {
